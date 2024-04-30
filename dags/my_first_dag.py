@@ -23,9 +23,52 @@ with DAG(
     dag.doc_md = """ 
     This is my first DAG in airflow. I can write documentation in Markdown here with **bold text** or __bold text__. """
 
-    task = PythonOperator(
-        task_id='fetch_data_from_x',
-        python_callable=fetch_data_from_x,
+
+    def launch_task(**kwargs):
+        print("Hello Airflow - This is Task with task_number:", kwargs['task_number'])
+        print("kwargs['dag_run']", kwargs["dag_run"].execution_date)
+
+
+    tasks = []
+    TASKS_COUNT = 2
+
+
+    for i in range(TASKS_COUNT):
+        first_task = PythonOperator(
+            task_id='source_to_raw' + str(i),
+            python_callable=launch_task,
+            provide_context=True,
+            op_kwargs={'task_number': 'task' + str(i)}
+        )
+
+        second_task = PythonOperator(
+            task_id='raw_to_formatted' + str(i),
+            python_callable=launch_task,
+            provide_context=True,
+            op_kwargs={'task_number': 'task' + str(i)}
+        )
+        first_task.set_downstream(second_task)
+
+        tasks.append(second_task)
+
+    produce_usage_task = PythonOperator(
+        task_id='produce_usage' + str(i),
+        python_callable=launch_task,
         provide_context=True,
-        op_kwargs={'task_number': 'task1'}
+        op_kwargs={'task_number': 'task' + str(i)}
     )
+    # In python [-1] get the last element in an array
+
+    for i in range(TASKS_COUNT - 1):
+        tasks[i].set_downstream(produce_usage_task)
+
+    index_to_elastic_task = PythonOperator(
+        task_id='index_to_elastic' + str(i),
+        python_callable=launch_task,
+        provide_context=True,
+        op_kwargs={'task_number': 'task' + str(i)}
+    )
+
+    produce_usage_task.set_downstream(index_to_elastic_task)
+
+
