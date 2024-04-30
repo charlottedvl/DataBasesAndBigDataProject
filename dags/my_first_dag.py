@@ -31,44 +31,37 @@ with DAG(
     tasks = []
     TASKS_COUNT = 2
 
+    produce_usage_task = PythonOperator(
+        task_id='produce_usage',
+        python_callable=launch_task,
+        provide_context=True,
+        op_kwargs={'task_number': 'task'}
+    )
+
+    index_to_elastic_task = PythonOperator(
+        task_id='index_to_elastic',
+        python_callable=launch_task,
+        provide_context=True,
+        op_kwargs={'task_number': 'task'}
+    )
 
     for i in range(TASKS_COUNT):
         first_task = PythonOperator(
-            task_id='source_to_raw' + str(i),
+            task_id='source_to_raw' + str(i + 1),
             python_callable=launch_task,
             provide_context=True,
-            op_kwargs={'task_number': 'task' + str(i)}
+            op_kwargs={'task_number': 'task' + str(i + 1)}
         )
 
         second_task = PythonOperator(
-            task_id='raw_to_formatted' + str(i),
+            task_id='raw_to_formatted' + str(i + 1),
             python_callable=launch_task,
             provide_context=True,
-            op_kwargs={'task_number': 'task' + str(i)}
+            op_kwargs={'task_number': 'task' + str(i + 1)}
         )
+
         first_task.set_downstream(second_task)
-
-        tasks.append(second_task)
-
-    produce_usage_task = PythonOperator(
-        task_id='produce_usage' + str(i),
-        python_callable=launch_task,
-        provide_context=True,
-        op_kwargs={'task_number': 'task' + str(i)}
-    )
-    # In python [-1] get the last element in an array
-
-
-
-    index_to_elastic_task = PythonOperator(
-        task_id='index_to_elastic' + str(i),
-        python_callable=launch_task,
-        provide_context=True,
-        op_kwargs={'task_number': 'task' + str(i)}
-    )
-
-    for i in range(TASKS_COUNT - 1):
-        tasks[i].set_downstream(produce_usage_task)
+        second_task.set_downstream(produce_usage_task)
 
     produce_usage_task.set_downstream(index_to_elastic_task)
 
