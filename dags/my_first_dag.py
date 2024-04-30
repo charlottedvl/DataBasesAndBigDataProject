@@ -58,8 +58,7 @@ with DAG(
     )
     # In python [-1] get the last element in an array
 
-    for i in range(TASKS_COUNT - 1):
-        tasks[i].set_downstream(produce_usage_task)
+
 
     index_to_elastic_task = PythonOperator(
         task_id='index_to_elastic' + str(i),
@@ -67,6 +66,9 @@ with DAG(
         provide_context=True,
         op_kwargs={'task_number': 'task' + str(i)}
     )
+
+    for i in range(TASKS_COUNT - 1):
+        tasks[i].set_downstream(produce_usage_task)
 
     produce_usage_task.set_downstream(index_to_elastic_task)
 
