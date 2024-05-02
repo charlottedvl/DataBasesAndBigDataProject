@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import date
 import requests
@@ -14,8 +15,10 @@ def fetch_data_from_themuse():
     if not os.path.exists(target_path):
         os.makedirs(target_path)
     url = 'https://www.themuse.com/api/public/jobs?page=1'
-    r = requests.get(url, allow_redirects=True)
-    open(target_path + 'announce.json', 'wb').write(r.content)
+    r = requests.get(url, allow_redirects=True).json()
+
+    with open(target_path + 'announce.json', 'w') as file:
+        json.dump(r.get("results"), file)
 
 
 def fetch_data_from_findwork():
@@ -33,5 +36,8 @@ def fetch_data_from_findwork():
     headers = {
         'Authorization': authorization
     }
-    r = requests.get(url, allow_redirects=True, headers=headers)
-    open(target_path + 'announce.json', 'wb').write(r.content)
+    r = requests.get(url, allow_redirects=True, headers=headers).json()
+
+    with open(target_path + 'announce.json', 'w') as file:
+        json.dump(r.get("results"), file)
+
