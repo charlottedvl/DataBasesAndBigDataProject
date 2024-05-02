@@ -1,7 +1,7 @@
 import os
 from datetime import date
 import requests
-from dotenv import load_dotenv, dotenv_values
+from dotenv import load_dotenv
 
 datalake_root_folder = "./datalake/"
 
@@ -15,7 +15,7 @@ def fetch_data_from_themuse(**kwargs):
         os.makedirs(target_path)
     url = 'https://www.themuse.com/api/public/jobs?page=1'
     r = requests.get(url, allow_redirects=True)
-    open(target_path + 'jobs.announce.themuse.tsv.gz', 'wb').write(r.content)
+    open(target_path + 'announce.json', 'wb').write(r.content)
 
 
 def fetch_data_from_findwork(**kwargs):
@@ -34,4 +34,4 @@ def fetch_data_from_findwork(**kwargs):
         'Authorization': authorization
     }
     r = requests.get(url, allow_redirects=True, headers=headers)
-    open(target_path + 'jobs.announce.findwork.tsv.gz', 'wb').write(r.content)
+    open(target_path + 'announce.json', 'wb').write(r.content)
