@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 datalake_root_folder = "./datalake/"
 
 
-def fetch_data_from_themuse(**kwargs):
+def fetch_data_from_themuse():
     current_day = date.today().strftime("%Y%m%d")
 
     target_path = datalake_root_folder + "raw/themuse/job/" + current_day + "/"
@@ -18,7 +18,7 @@ def fetch_data_from_themuse(**kwargs):
     open(target_path + 'announce.json', 'wb').write(r.content)
 
 
-def fetch_data_from_findwork(**kwargs):
+def fetch_data_from_findwork():
     current_day = date.today().strftime("%Y%m%d")
 
     target_path = datalake_root_folder + "raw/findwork/job/" + current_day + "/"
