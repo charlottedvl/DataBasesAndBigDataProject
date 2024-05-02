@@ -1,5 +1,5 @@
 import os
-import pandas as pd
+from pyspark.sql import SparkSession
 
 datalake_root_folder = "./datalake/"
 
@@ -13,6 +13,13 @@ def convert_raw_to_formatted(group_name, table_name, current_day, file_name):
     if not os.path.exists(formatted_path):
         os.makedirs(formatted_path)
 
-    df = pd.read_csv(raw_path, sep='\t')
-    parquet_file_name = file_name.replace(".tsv.gz", ".snappy.parquet")
-    df.to_parquet(formatted_path + parquet_file_name)
+    spark = SparkSession.builder \
+        .appName("FormatData") \
+        .getOrCreate()
+
+    df = spark.read.option("sep", "\t").json(raw_path)
+
+    parquet_file_name = file_name.replace(".json", ".snappy.parquet")
+    df.write.parquet(formatted_path + parquet_file_name)
+
+    spark.stop()
