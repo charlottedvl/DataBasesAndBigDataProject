@@ -43,9 +43,9 @@ def convert_raw_to_formatted_themuse(current_day, file_name):
                        col('contents').alias('content'))
 
     new_df.printSchema()
-    new_df = format_df(new_df)
+    formatted_df = format_df(new_df)
 
-    save_as_parquet(new_df, formatted_path, file_name, spark)
+    save_as_parquet(formatted_df, formatted_path, file_name, spark)
     spark.stop()
 
 
@@ -73,8 +73,8 @@ def convert_raw_to_formatted_findwork(current_day, file_name):
 
     new_df.printSchema()
     # new_df.show()
-    format_df(new_df)
-    save_as_parquet(new_df, formatted_path, file_name, spark)
+    formatted_df = format_df(new_df)
+    save_as_parquet(formatted_df, formatted_path, file_name, spark)
     spark.stop()
 
 
