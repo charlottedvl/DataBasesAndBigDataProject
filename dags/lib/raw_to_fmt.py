@@ -1,6 +1,6 @@
 import os
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_utc_timestamp
+from pyspark.sql.functions import col, to_utc_timestamp, concat_ws
 
 datalake_root_folder = "./datalake/"
 
@@ -22,17 +22,17 @@ def convert_raw_to_formatted_themuse(current_day, file_name):
 
     new_df = df.select(col('publication_date').alias('date'),
                        col('name'),
-                       col('locations').alias('location'),
+                       concat_ws(', ', col('locations.name')).alias('location'),
                        col('tags'),
-                       col('company'),
+                       col('company.name').alias('company'),
                        col('contents').alias('content'))
 
     new_df = new_df.withColumn('date', to_utc_timestamp(col('date'), "UTC"))
 
     new_df.printSchema()
     # new_df.show()
-    # save_as_parquet(new_df, formatted_path, file_name, spark)
-    # spark.stop()
+    save_as_parquet(new_df, formatted_path, file_name, spark)
+    spark.stop()
 
 
 def convert_raw_to_formatted_findwork(current_day, file_name):
@@ -61,8 +61,8 @@ def convert_raw_to_formatted_findwork(current_day, file_name):
 
     new_df.printSchema()
     # new_df.show()
-    # save_as_parquet(new_df, formatted_path, file_name, spark)
-    # spark.stop()
+    save_as_parquet(new_df, formatted_path, file_name, spark)
+    spark.stop()
 
 
 def save_as_parquet(df, formatted_path, file_name, spark):
