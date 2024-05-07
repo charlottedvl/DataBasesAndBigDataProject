@@ -99,4 +99,4 @@ def create_id(df):
 
 
 def remove_html(df):
-    return df.withColumn('clean_content', regexp_replace('content', '<[^>]*>', ''))
+    return df.withColumn('description', regexp_replace('content', '<[^>]*>', ''))

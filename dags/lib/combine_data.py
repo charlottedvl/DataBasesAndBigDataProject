@@ -18,6 +18,8 @@ from pyspark.ml.feature import CountVectorizer, VectorAssembler
 from pyspark.ml.clustering import LDA
 from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, StringType
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 import pyspark
 import string
@@ -70,44 +72,21 @@ def combine_data(current_day):
 
 
 def tokenize(data_df):
-    # Tokenize the text in the clean_content column
-    tokenizer = Tokenizer(inputCol="clean_content", outputCol="words")
-    wordsDataFrame = tokenizer.transform(data_df)
+    from pyspark.ml import PipelineModel
+    loaded_model = PipelineModel.load("../train/ensemble_random_forest_model")
+    predictions = loaded_model.transform(data_df)
+    predictions.show()
 
-    # Remove stopwords
-    job_stopwords = ["job", "position", "experience", "skills", "work", "role", "company", "-", 'we&#x27;re']
-    remover = StopWordsRemover(inputCol="words", outputCol="filtered")
-    wordsDataFrame = remover.transform(wordsDataFrame)
+    salary_list = predictions.select('prediction').rdd.flatMap(lambda x: x).collect()
 
-    # Vectorize the filtered words
-    #job_lexicon = ["engineer", "developer", "manager", "analyst", "consultant", "sales", "marketing", "designer", "specialist"]
-    cv = CountVectorizer(inputCol="filtered", outputCol="vectors")
-    cvmodel = cv.fit(wordsDataFrame)
-    df_vect = cvmodel.transform(wordsDataFrame)
+    # Plotting the distribution
+    plt.figure(figsize=(10, 6))
+    sns.histplot(salary_list, bins=20, kde=True, color='blue')
+    plt.title('Salary Distribution')
+    plt.xlabel('Salary')
+    plt.ylabel('Frequency')
+    plt.show()
 
-    # Train the LDA model
-    lda = LDA(featuresCol='vectors')
-    model = lda.fit(df_vect)
-
-    # Get the topics
-    topics = model.describeTopics()
-    vocab = cvmodel.vocabulary
-
-    # Tagging: Assign topics to each job offer
-    tagged_data = model.transform(df_vect).select("id", "topicDistribution")
-
-    # Show topics and tag each job offer with dominant topic
-    topics.show(truncate=False)
-    tagged_data.show()
-
-    # Example of tagging each job offer with dominant topic
-    for row in tagged_data.collect():
-        dominant_topic_index = row.topicDistribution.argmax()
-        print(f"Job Offer ID: {row.id}, Dominant Topic: {dominant_topic_index}")
-
-    for row in topics.collect():
-        topic_words = [vocab[idx] for idx in row.termIndices]
-        print("Topic {}: {}".format(row.topic, topic_words))
 
 
 
