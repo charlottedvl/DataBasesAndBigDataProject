@@ -70,58 +70,45 @@ def combine_data(current_day):
 
 
 def tokenize(data_df):
-    # Tokenize the text in the text column
+    # Tokenize the text in the clean_content column
     tokenizer = Tokenizer(inputCol="clean_content", outputCol="words")
     wordsDataFrame = tokenizer.transform(data_df)
 
-    # remove 20 most occuring documents, documents with non numeric characters, and documents with <= 3 characters
-    cv_tmp = CountVectorizer(inputCol="words", outputCol="tmp_vectors")
-    cv_tmp_model = cv_tmp.fit(wordsDataFrame)
-
-    top20 = list(cv_tmp_model.vocabulary[0:20])
-    more_then_3_characters = [word for word in cv_tmp_model.vocabulary if len(word) <= 3]
-    contains_digits = [word for word in cv_tmp_model.vocabulary if any(char.isdigit() for char in word)]
-
-    stopwords = []  # Add additional stopwords in this list
-
-    # Combine the three stopwords
-    stopwords = stopwords + top20 + more_then_3_characters + contains_digits
-
-    # Remove stopwords from the tokenized list
-    remover = StopWordsRemover(inputCol="words", outputCol="filtered", stopWords=stopwords)
+    # Remove stopwords
+    job_stopwords = ["job", "position", "experience", "skills", "work", "role", "company", "-", 'we&#x27;re']
+    remover = StopWordsRemover(inputCol="words", outputCol="filtered")
     wordsDataFrame = remover.transform(wordsDataFrame)
 
-    # Create a new CountVectorizer model without the stopwords
+    # Vectorize the filtered words
+    #job_lexicon = ["engineer", "developer", "manager", "analyst", "consultant", "sales", "marketing", "designer", "specialist"]
     cv = CountVectorizer(inputCol="filtered", outputCol="vectors")
     cvmodel = cv.fit(wordsDataFrame)
     df_vect = cvmodel.transform(wordsDataFrame)
 
-    # transform the dataframe to a format that can be used as input for LDA.train. LDA train expects a RDD with lists,
-    # where the list consists of a uid and (sparse) Vector
-    def parseVectors(line):
-        return [int(line[2]), line[0]]
-
-    vector_assembler = VectorAssembler(inputCols=['vectors'], outputCol='features')
-    df_assembled = vector_assembler.transform(df_vect)
-
     # Train the LDA model
-    lda = LDA(k=5, seed=1, featuresCol='features')
-    model = lda.fit(df_assembled)
+    lda = LDA(featuresCol='vectors')
+    model = lda.fit(df_vect)
 
-    sparsevector = df_vect.select('vectors', 'clean_content', 'id').rdd.map(parseVectors)
-    # Train the LDA model
-    #model = LDA.train(sparsevector, k=5, seed=1)
-
-    # Print the topics in the model
-    topics = model.describeTopics(maxTermsPerTopic=15)
-
+    # Get the topics
+    topics = model.describeTopics()
     vocab = cvmodel.vocabulary
 
-    topics.show()
+    # Tagging: Assign topics to each job offer
+    tagged_data = model.transform(df_vect).select("id", "topicDistribution")
+
+    # Show topics and tag each job offer with dominant topic
+    topics.show(truncate=False)
+    tagged_data.show()
+
+    # Example of tagging each job offer with dominant topic
+    for row in tagged_data.collect():
+        dominant_topic_index = row.topicDistribution.argmax()
+        print(f"Job Offer ID: {row.id}, Dominant Topic: {dominant_topic_index}")
 
     for row in topics.collect():
         topic_words = [vocab[idx] for idx in row.termIndices]
         print("Topic {}: {}".format(row.topic, topic_words))
+
 
 
 
