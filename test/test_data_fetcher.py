@@ -1,12 +1,20 @@
 from dags.lib.data_fetcher import fetch_data_from_themuse, fetch_data_from_findwork
-from dags.lib.raw_to_fmt import convert_raw_to_formatted
+from dags.lib.raw_to_fmt import convert_raw_to_formatted_themuse, convert_raw_to_formatted_findwork
+from dags.lib.combine_data import combine_data_findwork, combine_data
 from datetime import date
 
 current_day = date.today().strftime("%Y%m%d")
 filetofind = "announce.json"
-group = "findwork"
+group = "themuse"
 table = "job"
 # date_column = "publication_date"
-date_column = "date_posted"
+findwork_date_column = "date_posted"
+themuse_date_column = "publication_date"
 
-convert_raw_to_formatted(group, table, current_day, filetofind, date_column)
+parquet_file = "announce.snappy.parquet"
+
+#fetch_data_from_findwork()
+#fetch_data_from_themuse()
+#convert_raw_to_formatted_themuse(current_day, filetofind)
+#convert_raw_to_formatted_findwork(current_day, filetofind)
+combine_data(current_day)
