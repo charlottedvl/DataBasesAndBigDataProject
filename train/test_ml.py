@@ -1,5 +1,5 @@
-from pyspark.ml.feature import HashingTF, IDF, Tokenizer
-from pyspark.ml.regression import RandomForestRegressor
+from pyspark.ml.feature import HashingTF, IDF, Tokenizer, StopWordsRemover, CountVectorizer
+from pyspark.ml.regression import RandomForestRegressor, GBTRegressor
 from pyspark.ml import Pipeline
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
@@ -29,10 +29,17 @@ num_chunks = df.count() // chunk_size
 
 # Define the pipeline outside the loop
 tokenizer = Tokenizer(inputCol="description", outputCol="words")
+"""
 hashingTF = HashingTF(inputCol=tokenizer.getOutputCol(), outputCol="rawFeatures")
 idf = IDF(inputCol=hashingTF.getOutputCol(), outputCol="features")
 rf = RandomForestRegressor(featuresCol="features", labelCol="salary")
 pipeline = Pipeline(stages=[tokenizer, hashingTF, idf, rf])
+"""
+
+remover = StopWordsRemover(inputCol=tokenizer.getOutputCol(), outputCol="filtered_words")
+cv = CountVectorizer(inputCol=remover.getOutputCol(), outputCol="features")
+gbt = GBTRegressor(featuresCol="features", labelCol="salary")
+pipeline = Pipeline(stages=[tokenizer, remover, cv, gbt])
 
 for i in range(num_chunks):
     # Get a chunk of data
@@ -44,6 +51,6 @@ for i in range(num_chunks):
     model = pipeline.fit(chunk_df)
 
     # Save the model
-    model_path = f"./random_forest_model_{i}"
+    model_path = f"./gbt/gbt_regressor_model_{i}"
     model.save(model_path)
 

@@ -7,9 +7,10 @@ from pyspark.ml.feature import HashingTF, IDF, Tokenizer
 from pyspark.ml.regression import RandomForestRegressor
 from pyspark.ml import Pipeline
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
+from pyspark.sql.functions import col, when
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
 
 spark = SparkSession.builder \
@@ -20,19 +21,14 @@ data = spark.read.csv("jobs.csv", header=True, inferSchema=True, sep=";")
 data = data.withColumn("mean_salary", (col("sal_high") + col("sal_low")) / 2)
 df = data.select(col('description'), col('mean_salary').alias('salary'))
 df = df.dropna()
-actual_salaries = df.select('salary').rdd.flatMap(lambda x: x).collect()
-plt.figure(figsize=(10, 6))
-sns.histplot(actual_salaries, bins=20, kde=True, color='red', label='Actual')
-plt.title('Salary Distribution')
-plt.xlabel('Salary')
-plt.ylabel('Frequency')
-plt.xlim(0, 200000)
-plt.legend()
-plt.show()
+
+df = df.withColumn("salary", col("salary").cast("double"))
+df = df.withColumn("salary", when(col("salary") > 400000, 400000).otherwise(col("salary")))
+
 
 df.show()
 
-loaded_model = PipelineModel.load("ensemble_random_forest_model")
+loaded_model = PipelineModel.load("./gbt/ensemble_model")
 
 predictions = loaded_model.transform(df)
 
@@ -42,18 +38,20 @@ evaluator = RegressionEvaluator(labelCol="salary", predictionCol="prediction", m
 
 rmse = evaluator.evaluate(predictions)
 
-
 print("Root Mean Squared Error (RMSE) on test data = {:.2f}".format(rmse))
 
 predicted_salaries = predictions.select('prediction').rdd.flatMap(lambda x: x).collect()
 
-# Collect actual salaries
 actual_salaries = df.select('salary').rdd.flatMap(lambda x: x).collect()
 
-# Plotting the distribution
+
 plt.figure(figsize=(10, 6))
-sns.histplot(predicted_salaries, bins=20, kde=True, color='blue', label='Predicted')
-sns.histplot(actual_salaries, bins=20, kde=True, color='red', label='Actual')
+
+bin_range = (min(predicted_salaries), max(predicted_salaries))
+
+sns.histplot(predicted_salaries, bins=20, kde=True, color='blue', label='Predicted', binrange=bin_range)
+sns.histplot(actual_salaries, bins=20, kde=True, color='red', label='Actual', binrange=bin_range)
+
 plt.title('Salary Distribution')
 plt.xlabel('Salary')
 plt.ylabel('Frequency')
