@@ -60,77 +60,48 @@ finisher = Finisher() \
 
 
 def combine_data(current_day):
-    formatted_path_findwork = datalake_root_folder + "formatted/findwork/job/" + current_day + "/announce.snappy.parquet"
-    formatted_path_themuse = datalake_root_folder + "formatted/themuse/job/" + current_day + "/announce.snappy.parquet"
+    formatted_path_findwork = datalake_root_folder + "formatted/findwork/job/" + current_day + "/offers.snappy.parquet"
+    formatted_path_themuse = datalake_root_folder + "formatted/themuse/job/" + current_day + "/offers.snappy.parquet"
 
     sc = SparkContext(appName="CombineData")
     sqlContext = SQLContext(sc)
     df = sqlContext.read.parquet(formatted_path_findwork, formatted_path_themuse)
     df.registerTempTable("job")
 
-    tokenize(df)
+    predicted_df = tokenize(df)
+
+    predicted_df.printSchema()
+    # new_df.show()
+
+    parquet_file_name = datalake_root_folder + "combined/job/" + current_day + "/offers.snappy.parquet"
+    df.write.save(parquet_file_name, mode="overwrite")
+
 
 
 def tokenize(data_df):
     from pyspark.ml import PipelineModel
-    loaded_model = PipelineModel.load("../train/ensemble_random_forest_model")
+    loaded_model = PipelineModel.load("../train/random_forest/ensemble_model")
     predictions = loaded_model.transform(data_df)
     predictions.show()
 
-    salary_list = predictions.select('prediction').rdd.flatMap(lambda x: x).collect()
+    salary_list = predictions.select('prediction').rdd.flatMap(lambda x: x)
 
     # Plotting the distribution
+    """
     plt.figure(figsize=(10, 6))
     sns.histplot(salary_list, bins=20, kde=True, color='blue')
     plt.title('Salary Distribution')
     plt.xlabel('Salary')
     plt.ylabel('Frequency')
     plt.show()
+    
+    """
+
+
+    return salary_list
 
 
 
-
-
-def extract_proba(df):
-    nlp_pipeline = Pipeline(
-        stages=[document_assembler,
-                tokenizer,
-                normalizer,
-                stopwords_cleaner,
-                finisher])
-
-    nlp_model = nlp_pipeline.fit(df)
-
-    processed_df = nlp_model.transform(df)
-
-    tokens_df = processed_df.select('tokens').limit(10000)
-
-    cv = CountVectorizer(inputCol="tokens", outputCol="features", vocabSize=1000, minDF=3.0)
-
-    cv_model = cv.fit(tokens_df)
-
-    vectorized_tokens = cv_model.transform(tokens_df)
-
-    num_topics = 15
-    lda = LDA(k=num_topics, maxIter=10)
-    model = lda.fit(vectorized_tokens)
-    vocab = cv_model.vocabulary
-    topics = model.describeTopics()
-    topics_rdd = topics.rdd
-    topics_words = topics_rdd \
-        .map(lambda row: row['termIndices']) \
-        .map(lambda idx_list: [vocab[idx] for idx in idx_list]) \
-        .collect()
-
-    def get_words(idx_list):
-        return [vocab[idx] for idx in idx_list]
-
-    udf_get_words = udf(get_words, ArrayType(StringType()))
-    topics = topics.withColumn("words", udf_get_words(topics.termIndices))
-
-    topics_df = topics.select("topic", "words")
-
-    topics_df.show(truncate=False)
 
 
 def combine_data_findwork(group_name, table_name, current_day, file_name):

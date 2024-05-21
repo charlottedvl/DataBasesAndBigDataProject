@@ -17,7 +17,7 @@ def fetch_data_from_themuse():
     url = 'https://www.themuse.com/api/public/jobs?page=1'
     r = requests.get(url, allow_redirects=True).json()
 
-    with open(target_path + 'announce.json', 'w') as file:
+    with open(target_path + 'offers.json', 'w') as file:
         json.dump(r.get("results"), file)
 
 
@@ -38,6 +38,6 @@ def fetch_data_from_findwork():
     }
     r = requests.get(url, allow_redirects=True, headers=headers).json()
 
-    with open(target_path + 'announce.json', 'w') as file:
+    with open(target_path + 'offers.json', 'w') as file:
         json.dump(r.get("results"), file)
 
