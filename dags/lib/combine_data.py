@@ -74,7 +74,7 @@ def combine_data(current_day):
     # new_df.show()
 
     parquet_file_name = datalake_root_folder + "combined/job/" + current_day + "/offers.snappy.parquet"
-    df.write.save(parquet_file_name, mode="overwrite")
+    predicted_df.write.save(parquet_file_name, mode="overwrite")
 
 
 
@@ -84,10 +84,11 @@ def tokenize(data_df):
     predictions = loaded_model.transform(data_df)
     predictions.show()
 
-    salary_list = predictions.select('prediction').rdd.flatMap(lambda x: x)
+
 
     # Plotting the distribution
     """
+    salary_list = predictions.select('prediction').rdd.flatMap(lambda x: x).collect()
     plt.figure(figsize=(10, 6))
     sns.histplot(salary_list, bins=20, kde=True, color='blue')
     plt.title('Salary Distribution')
@@ -98,7 +99,7 @@ def tokenize(data_df):
     """
 
 
-    return salary_list
+    return predictions
 
 
 
