@@ -29,7 +29,9 @@ from pyspark.mllib.util import MLUtils
 from pyspark.sql.types import *
 from pyspark.ml.feature import CountVectorizer, CountVectorizerModel, Tokenizer, RegexTokenizer, StopWordsRemover
 
-datalake_root_folder = "./datalake/"
+from utils.s3_manager import S3Manager
+
+datalake_root_folder = "datalake/"
 
 """
 document_assembler = DocumentAssembler() \
@@ -60,6 +62,9 @@ finisher = Finisher() \
 
 
 def combine_data(current_day):
+
+    s3 = S3Manager()
+
     formatted_path_findwork = datalake_root_folder + "formatted/findwork/job/" + current_day + "/offers.snappy.parquet"
     formatted_path_themuse = datalake_root_folder + "formatted/themuse/job/" + current_day + "/offers.snappy.parquet"
 
@@ -74,8 +79,12 @@ def combine_data(current_day):
     # new_df.show()
 
     parquet_file_name = datalake_root_folder + "combined/job/" + current_day + "/offers.snappy.parquet"
-    predicted_df.write.save(parquet_file_name, mode="overwrite")
+    save_as_parquet(predicted_df, parquet_file_name, s3)
 
+
+def save_as_parquet(df, formatted_path, s3):
+    df.write.save(formatted_path, mode="overwrite")
+    s3.upload_directory(formatted_path)
 
 
 def tokenize(data_df):
@@ -83,8 +92,6 @@ def tokenize(data_df):
     loaded_model = PipelineModel.load("../train/random_forest/ensemble_model")
     predictions = loaded_model.transform(data_df)
     predictions.show()
-
-
 
     # Plotting the distribution
     """
@@ -100,9 +107,6 @@ def tokenize(data_df):
 
 
     return predictions
-
-
-
 
 
 def combine_data_findwork(group_name, table_name, current_day, file_name):
