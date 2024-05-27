@@ -1,7 +1,6 @@
 import os
 from pyspark.sql.functions import col, to_utc_timestamp, concat_ws, regexp_replace, concat, lower, date_format, \
     to_timestamp
-from utils.s3_manager import S3Manager
 
 from pyspark.sql import SparkSession
 import boto3
@@ -11,9 +10,7 @@ from botocore.exceptions import NoCredentialsError
 datalake_root_folder = "datalake/"
 
 
-def convert_raw_to_formatted_themuse(current_day, file_name):
-
-    s3 = S3Manager()
+def convert_raw_to_formatted_themuse(current_day, file_name, s3):
 
     path = "themuse/job/" + current_day + "/"
 
@@ -43,9 +40,7 @@ def convert_raw_to_formatted_themuse(current_day, file_name):
     spark.stop()
 
 
-def convert_raw_to_formatted_findwork(current_day, file_name):
-
-    s3 = S3Manager()
+def convert_raw_to_formatted_findwork(current_day, file_name, s3):
 
     path = "findwork/job/" + current_day + "/"
 

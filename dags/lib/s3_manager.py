@@ -4,11 +4,9 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 
 class S3Manager:
-    def __init__(self):
-
-        self.aws_conn_id = os.environ.get("AWS_CONN_ID")
-        self.bucket_name = os.environ.get("BUCKET_NAME")
-        self.s3 = S3Hook(aws_conn_id=self.aws_conn_id)
+    def __init__(self, aws_con_id, bucket_name):
+        self.bucket_name = bucket_name
+        self.s3 = S3Hook(aws_conn_id=aws_con_id)
 
     def upload_file(self, path, file_name):
         try:

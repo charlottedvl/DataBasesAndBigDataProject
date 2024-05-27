@@ -4,15 +4,11 @@ from datetime import date
 import requests
 from dotenv import load_dotenv
 
-from utils.s3_manager import S3Manager
 
 datalake_root_folder = "datalake/"
 
 
-def fetch_data_from_themuse():
-
-    s3 = S3Manager()
-
+def fetch_data_from_themuse(s3):
     current_day = date.today().strftime("%Y%m%d")
 
     target_path = datalake_root_folder + "raw/themuse/job/" + current_day
@@ -25,9 +21,7 @@ def fetch_data_from_themuse():
     save_as_json(s3, target_path, r)
 
 
-def fetch_data_from_findwork():
-
-    s3 = S3Manager()
+def fetch_data_from_findwork(s3):
 
     current_day = date.today().strftime("%Y%m%d")
 

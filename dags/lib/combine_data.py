@@ -29,7 +29,7 @@ from pyspark.mllib.util import MLUtils
 from pyspark.sql.types import *
 from pyspark.ml.feature import CountVectorizer, CountVectorizerModel, Tokenizer, RegexTokenizer, StopWordsRemover
 
-from utils.s3_manager import S3Manager
+
 
 datalake_root_folder = "datalake/"
 
@@ -61,9 +61,7 @@ finisher = Finisher() \
 """
 
 
-def combine_data(current_day):
-
-    s3 = S3Manager()
+def combine_data(current_day, s3):
 
     formatted_path_findwork = datalake_root_folder + "formatted/findwork/job/" + current_day + "/offers.snappy.parquet"
     formatted_path_themuse = datalake_root_folder + "formatted/themuse/job/" + current_day + "/offers.snappy.parquet"
@@ -89,7 +87,8 @@ def save_as_parquet(df, formatted_path, s3):
 
 def tokenize(data_df):
     from pyspark.ml import PipelineModel
-    loaded_model = PipelineModel.load("../train/random_forest/ensemble_model")
+    # TODO fix this
+    loaded_model = PipelineModel.load("./random_forest/ensemble_model")
     predictions = loaded_model.transform(data_df)
     predictions.show()
 
