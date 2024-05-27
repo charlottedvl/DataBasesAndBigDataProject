@@ -17,22 +17,21 @@ spark = SparkSession.builder \
     .appName("SalaryPrediction") \
     .getOrCreate()
 
-data = spark.read.csv("jobs.csv", header=True, inferSchema=True, sep=";")
-data = data.withColumn("mean_salary", (col("sal_high") + col("sal_low")) / 2)
-df = data.select(col('description'), col('mean_salary').alias('salary'))
+data = spark.read.csv("test_data.csv", header=True, inferSchema=True, sep=",", multiLine=True)
+
+data = data.withColumn("calc_salary", col("avg_salary").cast("double") * 1000)
+df = data.select(col('Job Description').alias('description'), col('calc_salary').alias('salary'))
 df = df.dropna()
 
-df = df.withColumn("salary", col("salary").cast("double"))
 df = df.withColumn("salary", when(col("salary") > 400000, 400000).otherwise(col("salary")))
-
 
 df.show()
 
-loaded_model = PipelineModel.load("./gbt/ensemble_model")
+loaded_model = PipelineModel.load("./random_forest/ensemble_model")
 
 predictions = loaded_model.transform(df)
 
-predictions.show()
+predictions.select('words').show(truncate=False)
 
 evaluator = RegressionEvaluator(labelCol="salary", predictionCol="prediction", metricName="rmse")
 
@@ -44,7 +43,7 @@ predicted_salaries = predictions.select('prediction').rdd.flatMap(lambda x: x).c
 
 actual_salaries = df.select('salary').rdd.flatMap(lambda x: x).collect()
 
-
+"""
 plt.figure(figsize=(10, 6))
 
 bin_range = (min(predicted_salaries), max(predicted_salaries))
@@ -57,4 +56,21 @@ plt.xlabel('Salary')
 plt.ylabel('Frequency')
 plt.xlim(0, 200000)
 plt.legend()
+plt.show()
+
+
+"""
+
+
+predictions_df = predictions.select("salary", "prediction").toPandas()
+
+plt.figure(figsize=(10, 6))
+plt.scatter(predictions_df["salary"], predictions_df["prediction"], alpha=0.5)
+plt.plot([0, 250000], [0, 250000], color='red', linestyle='--')  # Plotting the line y = x
+plt.xlim(0, 250000)
+plt.ylim(0, 250000)
+plt.xlabel("Actual Salary")
+plt.ylabel("Predicted Salary")
+plt.title("Actual vs Predicted Salary")
+plt.grid(True)
 plt.show()

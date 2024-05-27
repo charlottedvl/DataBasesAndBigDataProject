@@ -1,26 +1,20 @@
 import os
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_utc_timestamp, concat_ws, regexp_replace, explode, split, desc, collect_list, \
-    create_map, lit, concat, monotonically_increasing_id, lower, date_format
+from pyspark.sql.functions import col, to_utc_timestamp, concat_ws, regexp_replace, concat, lower, date_format, \
+    to_timestamp
+from utils.s3_manager import S3Manager
 
-from bertopic import BERTopic
-from bertopic.representation import KeyBERTInspired
-from sklearn.datasets import fetch_20newsgroups
-from sparknlp.base import *
-from sparknlp.annotator import *
-from sparknlp.pretrained import PretrainedPipeline
-import sparknlp
 from pyspark.sql import SparkSession
-from pyspark.ml import Pipeline
-from pyspark.ml.feature import CountVectorizer
-from pyspark.ml.clustering import LDA
-from pyspark.sql.functions import udf
-from pyspark.sql.types import ArrayType, StringType
+import boto3
+from botocore.exceptions import NoCredentialsError
 
-datalake_root_folder = "./datalake/"
+
+datalake_root_folder = "datalake/"
 
 
 def convert_raw_to_formatted_themuse(current_day, file_name):
+
+    s3 = S3Manager()
+
     path = "themuse/job/" + current_day + "/"
 
     raw_path = datalake_root_folder + "raw/" + path + file_name
@@ -45,11 +39,14 @@ def convert_raw_to_formatted_themuse(current_day, file_name):
     new_df.printSchema()
     formatted_df = format_df(new_df)
 
-    save_as_parquet(formatted_df, formatted_path, file_name, spark)
+    save_as_parquet(formatted_df, formatted_path, file_name, s3)
     spark.stop()
 
 
 def convert_raw_to_formatted_findwork(current_day, file_name):
+
+    s3 = S3Manager()
+
     path = "findwork/job/" + current_day + "/"
 
     raw_path = datalake_root_folder + "raw/" + path + file_name
@@ -74,18 +71,23 @@ def convert_raw_to_formatted_findwork(current_day, file_name):
     new_df.printSchema()
     # new_df.show()
     formatted_df = format_df(new_df)
-    save_as_parquet(formatted_df, formatted_path, file_name, spark)
+    save_as_parquet(formatted_df, formatted_path, file_name, s3)
     spark.stop()
 
 
-def save_as_parquet(df, formatted_path, file_name, spark):
+def save_as_parquet(df, formatted_path, file_name, s3):
     parquet_file_name = formatted_path + file_name.replace(".json", ".snappy.parquet")
     df.write.save(parquet_file_name, mode="overwrite")
-    spark.stop()
+
+    if s3.upload_directory(parquet_file_name):
+        print(f"Successfully uploaded {file_name} to {formatted_path}")
+    else:
+        print(f"Failed to upload {file_name} to {formatted_path}")
+
 
 
 def format_df(df):
-    new_df = df.withColumn('date', date_format(to_utc_timestamp(col('date'), "UTC"), "yyyy-MM-dd HH:mm:ss"))
+    new_df = df.withColumn('date', to_utc_timestamp(col('date'), "UTC"))
 
     new_df = create_id(new_df)
 
