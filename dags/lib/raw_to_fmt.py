@@ -1,10 +1,7 @@
 import os
-from pyspark.sql.functions import col, to_utc_timestamp, concat_ws, regexp_replace, concat, lower, date_format, \
-    to_timestamp
+from pyspark.sql.functions import col, to_utc_timestamp, concat_ws, regexp_replace, concat, lower
 
 from pyspark.sql import SparkSession
-import boto3
-from botocore.exceptions import NoCredentialsError
 
 
 datalake_root_folder = "datalake/"
@@ -92,7 +89,7 @@ def format_df(df):
 
 
 def create_id(df):
-    return df.withColumn('id', lower(regexp_replace(concat('date', 'name'), '[^a-zA-Z0-9]', '')))
+    return df.withColumn('_id', lower(regexp_replace(concat('date', 'name'), '[^a-zA-Z0-9]', '')))
 
 
 def remove_html(df):

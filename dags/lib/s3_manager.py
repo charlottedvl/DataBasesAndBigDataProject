@@ -37,23 +37,3 @@ class S3Manager:
             return False
         return True
 
-    def list_objects(self, bucket, prefix=''):
-        """
-        List objects in an S3 bucket.
-
-        :param bucket: Bucket name
-        :param prefix: Prefix for filtering objects
-        :return: List of object keys
-        """
-        s3_client = self.get_client()
-        try:
-            response = s3_client.list_objects_v2(Bucket=bucket, Prefix=prefix)
-            return [obj['Key'] for obj in response.get('Contents', [])]
-        except Exception as e:
-            print(f"Error listing objects: {e}")
-            return []
-
-
-if __name__ == '__main__':
-    s3 = S3Manager()
-    s3.upload_file('/', './monfile')

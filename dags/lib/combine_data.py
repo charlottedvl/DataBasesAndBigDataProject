@@ -1,35 +1,6 @@
 import os
-from pyspark.sql import SQLContext
-from pyspark import SparkContext
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_utc_timestamp, concat_ws, regexp_replace, explode, split, desc, collect_list, \
-    create_map, lit, concat, monotonically_increasing_id, lower
-
-from bertopic import BERTopic
-from bertopic.representation import KeyBERTInspired
-from sklearn.datasets import fetch_20newsgroups
-from sparknlp.base import *
-from sparknlp.annotator import *
-from sparknlp.pretrained import PretrainedPipeline
-import sparknlp
-from pyspark.sql import SparkSession
-from pyspark.ml import Pipeline
-from pyspark.ml.feature import CountVectorizer, VectorAssembler
-from pyspark.ml.clustering import LDA
-from pyspark.sql.functions import udf
-from pyspark.sql.types import ArrayType, StringType
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-import pyspark
-import string
 from pyspark import SparkContext
 from pyspark.sql import SQLContext
-from pyspark.mllib.util import MLUtils
-from pyspark.sql.types import *
-from pyspark.ml.feature import CountVectorizer, CountVectorizerModel, Tokenizer, RegexTokenizer, StopWordsRemover
-
-
 
 datalake_root_folder = "datalake/"
 
@@ -87,8 +58,7 @@ def save_as_parquet(df, formatted_path, s3):
 
 def tokenize(data_df):
     from pyspark.ml import PipelineModel
-    # TODO fix this
-    loaded_model = PipelineModel.load("./random_forest/ensemble_model")
+    loaded_model = PipelineModel.load("/Users/random_forest/ensemble_model")
     predictions = loaded_model.transform(data_df)
     predictions.show()
 

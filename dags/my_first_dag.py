@@ -14,7 +14,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 current_day = date.today().strftime("%Y%m%d")
-s3 = S3Manager( os.environ.get("AWS_CONN_ID"), os.environ.get("BUCKET_NAME"))
 elastic_user = os.environ.get("ELASTIC_USERNAME")
 elastic_passwd = os.environ.get("ELASTIC_PASSWORD")
 
@@ -47,7 +46,7 @@ with DAG(
         provide_context=True,
         op_kwargs={'task_number': 'task',
                    "current_day": current_day,
-                   's3': s3
+                   's3': S3Manager(os.environ.get("AWS_CONN_ID"), os.environ.get("BUCKET_NAME"))
                    }
     )
 
@@ -67,7 +66,7 @@ with DAG(
         task_id='source_to_raw_themuse',
         python_callable=fetch_data_from_themuse,
         provide_context=True,
-        op_kwargs={'task_number': 'task1', 's3': s3},
+        op_kwargs={'task_number': 'task1', 's3': S3Manager(os.environ.get("AWS_CONN_ID"), os.environ.get("BUCKET_NAME"))},
     )
 
     second_task_themuse = PythonOperator(
@@ -77,7 +76,7 @@ with DAG(
         op_kwargs={'task_number': 'task2',
                    "current_day": current_day,
                    "file_name": "offers.json",
-                   "s3": s3,
+                   "s3": S3Manager(os.environ.get("AWS_CONN_ID"), os.environ.get("BUCKET_NAME")),
                    },
     )
 
@@ -89,7 +88,9 @@ with DAG(
         task_id='source_to_raw_findwork',
         python_callable=fetch_data_from_findwork,
         provide_context=True,
-        op_kwargs={'task_number': 'task3', 's3': s3},
+        op_kwargs={'task_number': 'task3',
+                   's3': S3Manager(os.environ.get("AWS_CONN_ID"), os.environ.get("BUCKET_NAME"))
+                   },
     )
 
     second_task_findwork = PythonOperator(
@@ -99,7 +100,7 @@ with DAG(
         op_kwargs={'task_number': 'task4',
                    "current_day": current_day,
                    "file_name": "offers.json",
-                   "s3": s3
+                   "s3": S3Manager(os.environ.get("AWS_CONN_ID"), os.environ.get("BUCKET_NAME"))
                    },
     )
 
