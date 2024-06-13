@@ -42,7 +42,7 @@ def combine_data(current_day, s3):
     df = sqlContext.read.parquet(formatted_path_findwork, formatted_path_themuse)
     df.registerTempTable("job")
 
-    predicted_df = tokenize(df)
+    predicted_df = prediction_ml(df)
 
     predicted_df.printSchema()
     # new_df.show()
