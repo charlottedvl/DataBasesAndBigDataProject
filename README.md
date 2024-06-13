@@ -14,7 +14,7 @@ Which have been translated into an airflow dag to automatically run the whole pr
 Furthermore, we implemented Random Forest ML algorithm to enhance the analysis by giving a salary estimation based on the job description.
 
 > [!TIPS]
-> **Random Forest Regressor**
+> :bulb: **Random Forest Regressor**
 > The Random Forest Regressor is an ensemble learning method that combines multiple decision trees to improve prediction accuracy and control overfitting. It operates by constructing multiple trees during training and outputting the mean prediction of the individual trees for regression tasks. This approach enhances model robustness and accuracy.
 
 
