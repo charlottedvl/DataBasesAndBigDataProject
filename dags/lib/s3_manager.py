@@ -19,8 +19,6 @@ class S3Manager:
     def upload_directory(self, path):
         try:
             for file in os.listdir(path):
-                print(path)
-                print(file)
                 full_path = path + "/" + file
                 self.upload_file(path, full_path)
 
@@ -29,9 +27,9 @@ class S3Manager:
             return False
         return True
 
-    def download_file(self, file_path):
+    def download_file(self, file_path, file):
         try:
-            self.s3.download_file(file_path, self.bucket_name, file_path)
+            self.s3.get_key(file_path + "/" + file, self.bucket_name).download_file(file_path)
         except Exception as e:
             print(f"Error downloading file: {e}")
             return False

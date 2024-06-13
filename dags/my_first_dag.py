@@ -40,6 +40,7 @@ with DAG(
         print("Hello Airflow - This is Task with task_number:", kwargs['task_number'])
         print("kwargs['dag_run']", kwargs["dag_run"].execution_date)
 
+
     produce_usage_task = PythonOperator(
         task_id='produce_usage',
         python_callable=combine_data,
@@ -58,7 +59,8 @@ with DAG(
                    "current_day": current_day,
                    'username': elastic_user,
                    'password': elastic_passwd,
-    }
+                   's3': S3Manager(os.environ.get("AWS_CONN_ID"), os.environ.get("BUCKET_NAME")),
+                   }
     )
 
     # Data from themuse
@@ -66,7 +68,8 @@ with DAG(
         task_id='source_to_raw_themuse',
         python_callable=fetch_data_from_themuse,
         provide_context=True,
-        op_kwargs={'task_number': 'task1', 's3': S3Manager(os.environ.get("AWS_CONN_ID"), os.environ.get("BUCKET_NAME"))},
+        op_kwargs={'task_number': 'task1',
+                   's3': S3Manager(os.environ.get("AWS_CONN_ID"), os.environ.get("BUCKET_NAME"))},
     )
 
     second_task_themuse = PythonOperator(
@@ -108,5 +111,3 @@ with DAG(
     second_task_findwork.set_downstream(produce_usage_task)
 
     produce_usage_task.set_downstream(index_to_elastic_task)
-
-
