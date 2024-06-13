@@ -1,5 +1,3 @@
-import os
-
 import pyarrow.parquet as pq
 
 from elasticsearch import Elasticsearch, helpers

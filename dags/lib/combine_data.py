@@ -56,8 +56,9 @@ def save_as_parquet(df, formatted_path, s3):
     s3.upload_directory(formatted_path)
 
 
-def tokenize(data_df):
+def prediction_ml(data_df):
     from pyspark.ml import PipelineModel
+    # Edit the path where the model is stored
     loaded_model = PipelineModel.load("/Users/random_forest/ensemble_model")
     predictions = loaded_model.transform(data_df)
     predictions.show()
@@ -73,7 +74,6 @@ def tokenize(data_df):
     plt.show()
     
     """
-
 
     return predictions
 

@@ -8,7 +8,6 @@ datalake_root_folder = "datalake/"
 
 
 def convert_raw_to_formatted_themuse(current_day, file_name, s3):
-
     path = "themuse/job/" + current_day + "/"
 
     raw_path = datalake_root_folder + "raw/" + path + file_name
@@ -38,7 +37,6 @@ def convert_raw_to_formatted_themuse(current_day, file_name, s3):
 
 
 def convert_raw_to_formatted_findwork(current_day, file_name, s3):
-
     path = "findwork/job/" + current_day + "/"
 
     raw_path = datalake_root_folder + "raw/" + path + file_name
@@ -75,7 +73,6 @@ def save_as_parquet(df, formatted_path, file_name, s3):
         print(f"Successfully uploaded {file_name} to {formatted_path}")
     else:
         print(f"Failed to upload {file_name} to {formatted_path}")
-
 
 
 def format_df(df):
