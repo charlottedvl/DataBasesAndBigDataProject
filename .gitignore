@@ -2,3 +2,7 @@
 airflow_venv
 venv
 .env
+main.py
+train
+test
+datalake
