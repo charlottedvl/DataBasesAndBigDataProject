@@ -96,31 +96,33 @@ def remove_html(df):
 
 
 def find_country(location):
+    if location is None:
+        return None
+
+    location_lower = location.lower()
+    country_map = {
+        'USA': ['united states', 'us', 'usa', 'u.s.'],
+        'UK': ['united kingdom', 'uk'],
+        'Remote': ['remote']
+    }
+
+    for country, keywords in country_map.items():
+        if any(keyword in location_lower for keyword in keywords):
+            return country
+
     us_states = {
         'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS',
         'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY',
         'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV',
-        'WI', 'WY', "DC"
+        'WI', 'WY', 'DC'
     }
-    print("location: " + str(location))
-    if location is None:
-        return None
-    if 'united states' in location.lower() or 'US' in location or "USA" in location:
-        return 'USA'
-    elif 'united kingdom' in location.lower() or 'UK' in location:
-        return 'UK'
-    else:
-        try:
-            parts = location.split(', ')
-        except:
-            return None
-    try:
-        if len(parts) == 2 and parts[1] in us_states:
+
+    for state in us_states:
+        if state in location:
             return 'USA'
-        else:
-            return parts[-1]
-    except:
-        return None
+
+    parts = location.split(', ')
+    return parts[-1] if parts else None
 
 
 find_country_udf = udf(find_country, StringType())
