@@ -1,8 +1,8 @@
 import os
-from pyspark.sql.functions import col, to_utc_timestamp, concat_ws, regexp_replace, concat, lower
+from pyspark.sql.functions import col, to_utc_timestamp, concat_ws, regexp_replace, concat, lower, udf
 
 from pyspark.sql import SparkSession
-
+from pyspark.sql.types import StringType
 
 datalake_root_folder = "datalake/"
 
@@ -85,6 +85,8 @@ def format_df(df):
 
     new_df = remove_html(new_df)
 
+    new_df = format_location(new_df)
+
     return new_df
 
 
@@ -94,3 +96,38 @@ def create_id(df):
 
 def remove_html(df):
     return df.withColumn('description', regexp_replace('content', '<[^>]*>', ''))
+
+
+def find_country(location):
+    us_states = {
+        'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS',
+        'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY',
+        'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV',
+        'WI', 'WY', "DC"
+    }
+    print("location: " + str(location))
+    if location is None:
+        return None
+    if 'united states' in location.lower() or 'US' in location or "USA" in location:
+        return 'USA'
+    elif 'united kingdom' in location.lower() or 'UK' in location:
+        return 'UK'
+    else:
+        try:
+            parts = location.split(', ')
+        except:
+            return None
+    try:
+        if len(parts) == 2 and parts[1] in us_states:
+            return 'USA'
+        else:
+            return parts[-1]
+    except:
+        return None
+
+
+find_country_udf = udf(find_country, StringType())
+
+
+def format_location(df):
+    return df.withColumn('location', find_country_udf(df['location']))
