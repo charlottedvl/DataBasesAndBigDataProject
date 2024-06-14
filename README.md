@@ -11,6 +11,8 @@ Which have been translated into an airflow dag to automatically run the whole pr
 
 ![img.png](assets/img2.png)
 
+![img.png](assets/img3.png)
+
 Furthermore, we implemented the Random Forest ML algorithm to enhance the analysis by giving a salary estimation based on the job description.
 
 > [!TIP]
