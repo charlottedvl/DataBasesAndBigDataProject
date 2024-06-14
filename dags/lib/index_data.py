@@ -12,15 +12,15 @@ def index_data(current_day, username, password, s3):
     s3.download_file(path_to_file)
 
     parquet_table = pq.read_table(path_to_file)
-    df = parquet_table.to_pandas()
 
-    docs = df.to_dict(orient='records')
+    records = parquet_table.to_pydict()
+    docs = [{key: records[key][i] for key in records} for i in range(len(records[next(iter(records))]))]
 
     client = Elasticsearch([{'host': 'localhost', 'port': 9200, 'scheme': 'https'}],
                            basic_auth=(username, password),
                            verify_certs=False)
 
-    if not client.indices.exists(index='job-test'):
-        client.indices.create(index='job-test')
-    helpers.bulk(client, docs, index="job-test")
+    if not client.indices.exists(index='jobs'):
+        client.indices.create(index='jobs')
+    helpers.bulk(client, docs, index="jobs")
     print(f"{len(docs)} documents indexed !")
