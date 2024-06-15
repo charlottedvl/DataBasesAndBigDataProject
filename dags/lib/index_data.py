@@ -9,9 +9,7 @@ def index_data(current_day, username, password, s3):
 
     path_to_file = datalake_root_folder + "combined/job/" + current_day + "/offers.snappy.parquet/"
 
-    s3.download_file(path_to_file)
-
-    parquet_table = pq.read_table(path_to_file)
+    parquet_table = s3.download_file(path_to_file)
 
     records = parquet_table.to_pydict()
     docs = [{key: records[key][i] for key in records} for i in range(len(records[next(iter(records))]))]
